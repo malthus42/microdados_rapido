@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: microdados_rapido
+Version: 0.1.0
+Summary: Uma biblioteca para processar microdados do ENEM usando DuckDB e Parquet
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: duckdb
+Requires-Dist: pandas
+
+# microdados_rapido
+Biblioteca em python para facilitar o pré-processamento dos microdados do Exame Nacional do Ensino Médio.
