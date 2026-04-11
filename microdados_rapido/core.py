@@ -41,7 +41,6 @@ class MicrodadosRapido:
         return parquet_path
 
     def to_csv(self, sql, output_path):
-        """Executa uma query e salva o resultado diretamente em um arquivo CSV."""
         path = Path(output_path).as_posix()
         self.con.execute(f"COPY ({sql}) TO '{path}' (HEADER, DELIMITER ';')")
         return self
