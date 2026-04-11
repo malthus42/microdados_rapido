@@ -1,34 +1,29 @@
-import os
 import duckdb
 import pandas as pd
 from pathlib import Path
 
 class MicrodadosRapido:
-    def __init__(self, parquet_path, name="data"):
-        self.parquet_path = Path(parquet_path)
-        self.con = duckdb.connect()
+    def __init__(self, connection=None):
+        self.con = connection if connection else duckdb.connect()
+
+    def add_table(self, path, table_name):
+        path = Path(path)
+        
+        if path.suffix.lower() != '.csv':
+            raise ValueError(f"Formato inválido: '{path.suffix}'. Esta biblioteca aceita apenas arquivos .csv")
+        
+        parquet_path = self._csv_to_parquet(path)
+        
         self.con.execute(f"""
-            CREATE OR REPLACE VIEW {name} AS
-            SELECT * FROM '{self.parquet_path.as_posix()}'
+            CREATE OR REPLACE VIEW {table_name} AS 
+            SELECT * FROM '{parquet_path.as_posix()}'
         """)
+        return self
 
-    def query(self, sql):  
-        return self.con.execute(sql).df()
-
-    def df(self):
-        return self.con.execute(
-            f"SELECT * FROM '{self.parquet_path.as_posix()}'"
-        ).df()
-    
-    @staticmethod
-    def read_csv(path, name="data"):
-        csv_path = Path(path)
+    def _csv_to_parquet(self, csv_path):
         parquet_path = csv_path.with_suffix('.parquet')
-
-        con = duckdb.connect()
-
         if not parquet_path.exists():
-            con.execute(f"""
+            self.con.execute(f"""
                 COPY (
                     SELECT * FROM read_csv_auto(
                         '{csv_path.as_posix()}',
@@ -43,5 +38,10 @@ class MicrodadosRapido:
                 TO '{parquet_path.as_posix()}'
                 (FORMAT PARQUET, COMPRESSION 'ZSTD');
             """)
+        return parquet_path
 
-        return MicrodadosRapido(parquet_path, name)
+    def query(self, sql):  
+        return self.con.execute(sql).df()
+
+    def list_tables(self):
+        return self.con.execute("SHOW TABLES").df()
