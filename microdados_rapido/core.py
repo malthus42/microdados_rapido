@@ -1,8 +1,8 @@
 import duckdb
 import pandas as pd
 from pathlib import Path
-
-class MicrodadosRapido:
+from .enem import ENEMMixin
+class MicrodadosRapido(ENEMMixin):
     def __init__(self, connection=None):
         self.con = connection if connection else duckdb.connect()
 
