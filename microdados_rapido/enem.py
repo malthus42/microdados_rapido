@@ -44,11 +44,47 @@ class ENEMMixin:
 
         return self.query(query)
     
+    def balancear_grupos(
+    self,
+    df,
+    group_mapping,
+    coluna_origem="Q006",
+    coluna_grupo="grupo_label",
+    random_state=42
+):
+        df = df.copy()
+        df[coluna_grupo] = df[coluna_origem].map(group_mapping)
+
+        df = df.dropna(subset=[coluna_grupo])
+
+        contagens = df[coluna_grupo].value_counts()
+
+        if len(contagens) < 2:
+            raise ValueError(
+                "É necessário ter pelo menos dois grupos após o mapeamento."
+            )
+
+        tamanho_minimo = contagens.min()
+
+        df_balanceado = (
+            df.groupby(coluna_grupo, group_keys=False)
+            .apply(
+                lambda grupo: grupo.sample(
+                    n=tamanho_minimo,
+                    random_state=random_state,
+                    replace=False
+                )
+            )
+            .reset_index(drop=True)
+        )
+
+        return df_balanceado
+    
     def matriz_respostas(
     self, 
     df, 
     area, 
-    numero_inicial, 
+    numero_inicial=0, 
     n_itens=45, 
     offset_resposta=0, 
     offset_gabarito=0
@@ -92,4 +128,49 @@ class ENEMMixin:
                 np.nan
             )
 
+        matriz_binaria["ESCORE_TOTAL"] = (
+        matriz_binaria[item_cols]
+        .sum(axis=1)
+        )
+
         return matriz_binaria
+    
+    def preparar_dados_psicometricos(
+    self,
+    df,
+    area,
+    group_mapping,
+    numero_inicial=0,
+    n_itens=45,
+    offset_resposta=0,
+    offset_gabarito=0,
+    coluna_origem_grupo="Q006",
+    coluna_grupo="grupo_label",
+    random_state=42
+):
+        df_balanceado = self.balancear_grupos(
+            df=df,
+            group_mapping=group_mapping,
+            coluna_origem=coluna_origem_grupo,
+            coluna_grupo=coluna_grupo,
+            random_state=random_state
+        )
+
+        matriz = self.matriz_respostas(
+            df=df_balanceado,
+            area=area,
+            numero_inicial=numero_inicial,
+            n_itens=n_itens,
+            offset_resposta=offset_resposta,
+            offset_gabarito=offset_gabarito
+        )
+
+        df_balanceado = df_balanceado.reset_index(drop=True)
+        matriz = matriz.reset_index(drop=True)
+
+        df_final = pd.concat(
+            [df_balanceado, matriz],
+            axis=1
+        )
+
+        return df_final
