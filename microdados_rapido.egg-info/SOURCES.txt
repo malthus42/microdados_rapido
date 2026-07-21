@@ -2,7 +2,8 @@ README.md
 pyproject.toml
 microdados_rapido/__init__.py
 microdados_rapido/core.py
-microdados_rapido/enem.py
+microdados_rapido/loader.py
+microdados_rapido/query.py
 microdados_rapido.egg-info/PKG-INFO
 microdados_rapido.egg-info/SOURCES.txt
 microdados_rapido.egg-info/dependency_links.txt
